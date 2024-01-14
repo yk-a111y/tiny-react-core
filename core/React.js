@@ -1,11 +1,13 @@
 function createElement(type, props, ...children) {
   return {
     type,
-    props,
-    children: children.map(child => {
-      return typeof child === 'string' ?
-        createTextNode(child) : child
-    })
+    props: {
+      ...props,
+      children: children.map(child => {
+        return typeof child === 'string' ?
+          createTextNode(child) : child
+      })
+    }
   }
 }
 
@@ -13,9 +15,9 @@ function createTextNode(text) {
   return {
     type: 'TEXT_ELEMENT',
     props: {
-      nodeValue: text
+      nodeValue: text,
+      children: []
     },
-    children: []
   }
 }
 
@@ -30,7 +32,8 @@ function render(el, container) {
     }
   })
 
-  const children = el.children;
+
+  const children = el.props.children;
   children.forEach(child => {
     render(child, dom);
   })
