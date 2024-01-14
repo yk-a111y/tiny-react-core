@@ -5,6 +5,5 @@ import { React } from '../core/React.js'
 //   return <div>111</div>
 // }
 const App = <div>mini-react</div>
-console.log(App);
 
 export default App
