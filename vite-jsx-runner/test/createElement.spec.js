@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { createElement } from '../../core/React.js';
+import React from '../../core/React.js';
 describe('createElement', () => {
   it('should return vDom without props', () => {
-    const el = createElement('div', null, 'hi-react');
+    const el = React.createElement('div', null, 'hi-react');
     expect(el).toEqual({
       type: 'div',
       props: {

@@ -9,7 +9,7 @@
 // dom.append(textNode);
 
 // v2 React 声明式编程
-import { React } from '../core/React.js';
+import React from '../core/React.js';
 import { ReactDOM } from '../core/ReactDOM.js';
 import App from './App.jsx';
 
