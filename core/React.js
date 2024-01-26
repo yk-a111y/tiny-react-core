@@ -22,19 +22,19 @@ function createTextNode(text) {
 }
 
 function render(el, container) {
-  nextUnitOfWork = {
+  wipRoot = {
     dom: container,
     props: {
       children: [el]
     }
   };
 
-  root = nextUnitOfWork;
+  nextUnitOfWork = wipRoot;
 }
 
 // 调度器
 let nextUnitOfWork = null;
-let root = null; // 程序根节点
+let wipRoot = null; // 程序根节点(Work In Progress树的根节点)
 let currentRoot = null; // 保存某次更新的新树
 function workLoop(deadline) {
   let shouldYield = false;
@@ -47,7 +47,7 @@ function workLoop(deadline) {
   }
 
   // 无nextUnitOfWork 证明所有节点处理完毕，下一步开始统一提交
-  if (!nextUnitOfWork && root) {
+  if (!nextUnitOfWork && wipRoot) {
     commitRoot();
   }
 
@@ -55,10 +55,10 @@ function workLoop(deadline) {
 }
 
 function commitRoot() {
-  commitWork(root.child);
-  currentRoot = root;
+  commitWork(wipRoot.child);
+  currentRoot = wipRoot;
   // commitRoot仅执行一次
-  root = null;
+  wipRoot = null;
 }
 
 function commitWork(fiber) {
@@ -114,7 +114,7 @@ function updateProps(dom, nextProps, prevProps) {
   })
 }
 
-function initChildren(fiber, children) {
+function reconcileChildren(fiber, children) {
   // update时，获取old fiber tree 上的节点
   let oldFiber = fiber.alternate?.child;
   let prevChild = null;
@@ -162,7 +162,7 @@ function initChildren(fiber, children) {
 
 function updateFunctionComponent(fiber) {
   const children = [fiber.type(fiber.props)];
-  initChildren(fiber, children);
+  reconcileChildren(fiber, children);
 }
 
 function updateHostComponent(fiber) {
@@ -175,7 +175,7 @@ function updateHostComponent(fiber) {
   }
   // 3. **按照更新顺序生成链表**
   const children = fiber.props.children;
-  initChildren(fiber, children);
+  reconcileChildren(fiber, children);
 }
 
 function performUnitOfWork(fiber) {
@@ -190,7 +190,7 @@ function performUnitOfWork(fiber) {
 
   // 3. **按照更新顺序生成链表**
   const children = isFunctionComponent ? [fiber.type(fiber.props)] : fiber.props.children;
-  initChildren(fiber, children);
+  reconcileChildren(fiber, children);
   // 4. 返回下一个需要处理的节点
   if (fiber.child) {
     return fiber.child;
@@ -209,13 +209,13 @@ function performUnitOfWork(fiber) {
 requestIdleCallback(workLoop);
 
 function update() {
-  nextUnitOfWork = {
+  wipRoot = {
     dom: currentRoot.dom,
     props: currentRoot.props,
     alternate: currentRoot, // alternate指向old fiber tree 对应的节点
   };
 
-  root = nextUnitOfWork;
+  nextUnitOfWork = wipRoot;
 }
 
 const React = {

@@ -15,11 +15,8 @@ function Counter({ num }) {
 // }
 
 function App() {
-  const handleClick = () => {
-    console.log('handleClick');
-  }
   return (
-    <div onClick={handleClick}>
+    <div>
       mini-react
       <Counter num={10} />
       {/* <Counter num={20} /> */}
