@@ -276,8 +276,8 @@ function useState(initial) {
   currentFiber.stateHooks = stateHooks;
 
   function setState(action) {
-    // action 推入更新队列
-    stateHook.queue.push(action);
+    // action 推入更新队列；action不是函数的话，需要包裹一层函数，将action作为返回值
+    stateHook.queue.push(typeof action === 'function' ? action : () => action);
 
     wipRoot = {
       ...currentFiber,

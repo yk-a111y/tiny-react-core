@@ -15,6 +15,8 @@ function App() {
     setBar((bar) => {
       return bar + '1';
     })
+
+    setBar('test')
   }
 
   return (
