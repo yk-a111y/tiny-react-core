@@ -189,6 +189,9 @@ function reconcileChildren(fiber, children) {
 
 function updateFunctionComponent(fiber) {
   wipFiber = fiber;
+
+  stateHooks = [];
+  stateHookIndex = 0;
   // 3. **按照更新顺序生成链表**
   const children = [fiber.type(fiber.props)];
   reconcileChildren(fiber, children);
@@ -250,10 +253,41 @@ function update() {
   }
 }
 
+
+let stateHooks;
+let stateHookIndex;
+function useState(initial) {
+  let currentFiber = wipFiber;
+  // 按顺序取出oldHook。这也是为什么useState不可以在if else语句中调用，因为可能导致顺序错乱
+  const oldHook = currentFiber.alternate?.stateHooks[stateHookIndex];
+  const stateHook = {
+    state: oldHook? oldHook.state : initial
+  }
+
+  stateHookIndex++
+  stateHooks.push(stateHook);
+
+  currentFiber.stateHooks = stateHooks;
+
+  function setState(action) {
+    stateHook.state = action(stateHook.state);
+
+    wipRoot = {
+      ...currentFiber,
+      alternate: currentFiber, // alternate指向old fiber tree 对应的节点
+    };
+  
+    nextUnitOfWork = wipRoot;
+  }
+
+  return [stateHook.state, setState];
+}
+
 const React = {
   createElement,
   render,
-  update
+  update,
+  useState
 }
 
 export default React; 
