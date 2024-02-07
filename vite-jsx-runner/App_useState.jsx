@@ -7,7 +7,7 @@ function App() {
 
   function handleClick() {
     setCount((count) => {
-      return count + 1;
+      return count;
     })
   }
 

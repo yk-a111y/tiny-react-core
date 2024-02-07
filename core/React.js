@@ -276,6 +276,9 @@ function useState(initial) {
   currentFiber.stateHooks = stateHooks;
 
   function setState(action) {
+    // 如果更新前后值相同，那么则不必要更新，直接return
+    const eagerState = typeof action === 'function' ? action(stateHook.state) : action;
+    if (eagerState === stateHook.state) return;
     // action 推入更新队列；action不是函数的话，需要包裹一层函数，将action作为返回值
     stateHook.queue.push(typeof action === 'function' ? action : () => action);
 
