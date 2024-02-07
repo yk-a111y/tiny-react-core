@@ -12,6 +12,7 @@
 import React from '../core/React.js';
 import { ReactDOM } from '../core/ReactDOM.js';
 // import App from './App.jsx';
-import App from './App_useState.jsx';
+// import App from './App_useState.jsx';
+import App from './App_useEffect.jsx';
 
 ReactDOM.createRoot(document.querySelector('#root')).render(<App />);

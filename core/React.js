@@ -64,6 +64,7 @@ function workLoop(deadline) {
 function commitRoot() {
   deletions.forEach(commitDeletion);
   commitWork(wipRoot.child);
+  commitEffectHooks()
   currentRoot = wipRoot;
   // commitRoot仅执行一次
   wipRoot = null;
@@ -73,7 +74,6 @@ function commitRoot() {
 function commitDeletion(fiber) {
   fiber.parent.dom.removeChild(fiber.dom);
 }
-
 function commitWork(fiber) {
   if(!fiber) return;
 
@@ -93,6 +93,33 @@ function commitWork(fiber) {
 
   commitWork(fiber.child);
   commitWork(fiber.sibling);
+}
+function commitEffectHooks() {
+  function run(fiber) {
+    if (!fiber) return;
+
+    if (!fiber.alternate) {
+      // fiber无alternate属性 => 为init逻辑
+      fiber.effectHooks?.forEach(hook => {
+        hook.callback();
+      })
+    } else {
+      // update逻辑；检查deps数组中的依赖有无变化
+      fiber.effectHooks?.forEach((newHook, index) => {
+        const oldEffectHook = fiber.alternate?.effectHooks[index];
+        const needUpdate = oldEffectHook?.deps.some((oldDep, oldDepIndex) => {
+          return oldDep !== newHook.deps[oldDepIndex];
+        })
+
+        needUpdate && newHook.callback();
+      })
+    }
+
+    run(fiber.child);
+    run(fiber.sibling);
+  }
+
+  run(wipRoot);
 }
 
 function createDom(type) {
@@ -189,8 +216,8 @@ function reconcileChildren(fiber, children) {
 
 function updateFunctionComponent(fiber) {
   wipFiber = fiber;
-
   stateHooks = [];
+  effectHooks = [];
   stateHookIndex = 0;
   // 3. **按照更新顺序生成链表**
   const children = [fiber.type(fiber.props)];
@@ -293,11 +320,24 @@ function useState(initial) {
   return [stateHook.state, setState];
 }
 
+let effectHooks;
+function useEffect(callback, deps) {
+  const effectHook = {
+    callback,
+    deps
+  }
+
+  effectHooks.push(effectHook);
+
+  wipFiber.effectHooks = effectHooks;
+}
+
 const React = {
   createElement,
   render,
   update,
-  useState
+  useState,
+  useEffect
 }
 
 export default React; 
