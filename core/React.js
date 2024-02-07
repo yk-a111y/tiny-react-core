@@ -261,8 +261,14 @@ function useState(initial) {
   // 按顺序取出oldHook。这也是为什么useState不可以在if else语句中调用，因为可能导致顺序错乱
   const oldHook = currentFiber.alternate?.stateHooks[stateHookIndex];
   const stateHook = {
-    state: oldHook? oldHook.state : initial
+    state: oldHook ? oldHook.state : initial,
+    queue: oldHook ? oldHook.queue : []
   }
+
+  stateHook.queue.forEach(action => {
+    stateHook.state = action(stateHook.state);
+  })
+  stateHook.queue = [];
 
   stateHookIndex++
   stateHooks.push(stateHook);
@@ -270,7 +276,8 @@ function useState(initial) {
   currentFiber.stateHooks = stateHooks;
 
   function setState(action) {
-    stateHook.state = action(stateHook.state);
+    // action 推入更新队列
+    stateHook.queue.push(action);
 
     wipRoot = {
       ...currentFiber,
