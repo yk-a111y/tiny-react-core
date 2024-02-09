@@ -95,23 +95,27 @@ function commitWork(fiber) {
   commitWork(fiber.sibling);
 }
 function commitEffectHooks() {
+
   function run(fiber) {
     if (!fiber) return;
 
     if (!fiber.alternate) {
       // fiber无alternate属性 => 为init逻辑
       fiber.effectHooks?.forEach(hook => {
-        hook.callback();
+        // init时将cleanup挂载到effectHook上
+        hook.cleanup = hook.callback();
       })
     } else {
       // update逻辑；检查deps数组中的依赖有无变化
       fiber.effectHooks?.forEach((newHook, index) => {
-        const oldEffectHook = fiber.alternate?.effectHooks[index];
-        const needUpdate = oldEffectHook?.deps.some((oldDep, oldDepIndex) => {
-          return oldDep !== newHook.deps[oldDepIndex];
-        })
+        if (newHook.deps.length > 0) {
+          const oldEffectHook = fiber.alternate?.effectHooks[index];
+          const needUpdate = oldEffectHook?.deps.some((oldDep, oldDepIndex) => {
+            return oldDep !== newHook.deps[oldDepIndex];
+          })
 
-        needUpdate && newHook.callback();
+          needUpdate && (newHook.cleanup = newHook.callback());
+        }
       })
     }
 
@@ -119,6 +123,20 @@ function commitEffectHooks() {
     run(fiber.sibling);
   }
 
+  function runCleanup(fiber) {
+    if (!fiber) return;
+    fiber.alternate?.effectHooks?.forEach(hook => {
+      if (hook.deps.length > 0) {
+        hook.cleanup && hook.cleanup();
+      }
+    })
+
+    runCleanup(fiber.child);
+    runCleanup(fiber.sibling);
+  }
+
+  // cleanup调用时机先于调用effect
+  runCleanup(wipRoot);
   run(wipRoot);
 }
 
@@ -324,7 +342,8 @@ let effectHooks;
 function useEffect(callback, deps) {
   const effectHook = {
     callback,
-    deps
+    deps,
+    cleanup: undefined
   }
 
   effectHooks.push(effectHook);

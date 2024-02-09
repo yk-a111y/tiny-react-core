@@ -7,10 +7,16 @@ function App() {
 
   React.useEffect(() => {
     console.log('init');
+    return () => {
+      console.log('init clean up');
+    }
   }, [])
   
   React.useEffect(() => {
     console.log('count update:', count);
+    return () => {
+      console.log('count clean up');
+    }
   }, [count])
   
   function handleClick() {
